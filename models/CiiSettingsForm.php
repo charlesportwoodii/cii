@@ -1,5 +1,4 @@
 <?php
-Yii::import('cii.widgets.CiiActiveForm');
 /**
  * CiiSettingsForm is a CWidget that acts as a form builder based upon the information provided in Dashboard Settings Models
  * This class utilizes components from TbActiveForm
@@ -63,7 +62,7 @@ class CiiSettingsForm extends CWidget
 	{
 
 		// Setup the form
-		$form = $this->beginWidget('CiiActiveForm', array(
+		$form = $this->beginWidget('cii.widgets.CiiActiveForm', array(
 		    'id'=>get_class($this->model),
 		    'enableAjaxValidation'=>true,
 		    'action' => $this->action,
