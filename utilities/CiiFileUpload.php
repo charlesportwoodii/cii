@@ -31,38 +31,21 @@ class CiiFileUpload
      */
 	public function uploadFile()
 	{
-        if (defined('CII_CONFIG') && isset(Yii::app()->params['CiiMS']['upload_class']))
+        if (!isset(Yii::app()->params['CiiMS']['upload']))
         {
-            $className = Yii::app()->params['CiiMS']['upload_class'];
-            $class = new $className(Yii::app()->params['CiiMS']);
-            $this->_result = $class->upload();
-            $this->_response = $this->_handleResourceUpload($this->_result['url']);
+            Yii::import('cii.utilities.CiiFileUploader');
+            $className = 'CiiFileUploader';
         }
-        elseif (Cii::getConfig('useOpenstackCDN'))
-            $this->_response = $this->_uploadCDNFile();
         else
-            $this->_response = $this->_uploadFile();
+            $className = Yii::app()->params['CiiMS']['upload']['class'];
+
+        $config = isset(Yii::app()->params['CiiMS']['upload']['options']) ? Yii::app()->params['CiiMS']['upload']['options'] : array();
+        $class = new $className($config);
+        $this->_result = $class->upload();
+        $this->_response = $this->_handleResourceUpload($this->_result['url']);
 
         return $this->_response;
 	}
-
-	/**
-     * Handle normal file uploads
-     * @return string
-     */
-    private function _uploadFile()
-    {
-        $path = '/';
-        $folder = Yii::app()->getBasePath() .'/../uploads' . $path;
-
-        $sizeLimit = Yii::app()->params['max_fileupload_size'];
-        $allowedExtensions = array('jpg', 'jpeg', 'png', 'gif', 'bmp');
-        $uploader = new CiiFileUploader($allowedExtensions, $sizeLimit);
-
-        $this->_result = $uploader->handleUpload($folder);
-
-        return $this->_handleResourceUpload('/uploads/' . $this->_result['filename']);
-    }
 
     /**
      * Handle CDN related Uploads
