@@ -80,9 +80,9 @@ class CiiUploader
         //$filename = md5(uniqid());
         $ext = $pathinfo['extension'];
 
-        if(!in_array(strtolower($ext), $this->getAllowedExtensions()))
+        if(!in_array(strtolower($ext), $this->allowedExtensions))
         {
-            $these = implode(', ', $this->getAllowedExtensions());
+            $these = implode(', ', $this->allowedExtensions);
             return array('error' => Yii::t('ciims.misc', "File has an invalid extension, it should be one of {{these}}.", array('{{these}}' => $these)));
         }
 
