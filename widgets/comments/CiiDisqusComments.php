@@ -24,7 +24,7 @@ class CiiDisqusComments extends CiiCommentMaster
 	public function init()
 	{
 		$this->_shortname = Cii::getConfig('disqus_shortname');
-		$asset = Yii::app()->assetManager->publish(YiiBase::getPathOfAlias('ext.cii.assets.dist'), true, -1, YII_DEBUG);
+		$asset = Yii::app()->assetManager->publish(YiiBase::getPathOfAlias('cii.assets.dist'), true, -1, YII_DEBUG);
 		Yii::app()->clientScript->registerScriptFile($asset. (YII_DEBUG ? '/ciidisqus.js' : '/ciidisqus.min.js'), CClientScript::POS_END);
 
 		if ($this->content != false)

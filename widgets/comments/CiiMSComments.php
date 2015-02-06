@@ -13,7 +13,7 @@ class CiiMSComments extends CWidget
 	 */
 	public function init()
 	{
-		$asset = Yii::app()->assetManager->publish(YiiBase::getPathOfAlias('ext.cii.assets.dist'), true, -1, YII_DEBUG);
+		$asset = Yii::app()->assetManager->publish(YiiBase::getPathOfAlias('cii.assets.dist'), true, -1, YII_DEBUG);
 
 		// Register CSS and Scripts
 		Yii::app()->clientScript->registerScriptFile($asset. (YII_DEBUG ? '/ciimscomments.js' : '/ciimscomments.min.js'), CClientScript::POS_END);

@@ -22,6 +22,6 @@ class CiiCommentMaster extends CWidget
 	 */
 	public function init()
 	{
-		Yii::app()->controller->widget('ext.cii.widgets.comments.' . $this->type, array('content' => $this->content));
+		Yii::app()->controller->widget('cii.widgets.comments.' . $this->type, array('content' => $this->content));
 	}
 }

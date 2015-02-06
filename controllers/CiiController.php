@@ -224,7 +224,7 @@ class CiiController extends CController
             {
                 // Render the Comment functionality automatically
                 if (!$this->isInModule())
-                    $this->widget('ext.cii.widgets.comments.CiiCommentMaster', array('type' => Cii::getCommentProvider(), 'content' => isset($data['data']) && is_a($data['data'], 'Content') ? $data['data']->attributes : false));
+                    $this->widget('cii.widgets.comments.CiiCommentMaster', array('type' => Cii::getCommentProvider(), 'content' => isset($data['data']) && is_a($data['data'], 'Content') ? $data['data']->attributes : false));
 
     		    $output=$this->renderFile($layoutFile,array('content'=>$output, 'meta'=>$this->params['meta']),true);
             }
