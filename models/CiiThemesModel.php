@@ -13,6 +13,12 @@ class CiiThemesModel extends CiiSettingsModel
      */
     public $noRouting = false;
 
+    /**
+     * Tells CiiMS to hide this theme from the drop down menu list in the dashboard API
+     * @var boolean $hidden
+     */
+    public $hidden = false;
+
 	/**
      * Retrieves all categories to display int he footer
      * @return array $items     The CMenu Items we are going to return

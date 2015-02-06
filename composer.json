@@ -8,6 +8,20 @@
             "email": "charlesportwoodii@ethreal.net"
         }
     ],
+    "autoload": {
+        "classmap": [ 
+            "cache/",
+            "commands/",
+            "components/",
+            "components/pager/",
+            "controllers/",
+            "models/",
+            "utilities/",
+            "widgets/",
+            "widgets/input/",
+            "widgets/comments/"
+        ]
+    },  
     "minimum-stability": "dev",
     "require": {}
 }

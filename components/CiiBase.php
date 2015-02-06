@@ -9,7 +9,10 @@ class CiiBase extends CApplicationComponent
     {
         // Register the cii path alias.
         if (Yii::getPathOfAlias('cii') === false)
+        {
             Yii::setPathOfAlias('cii', realpath(dirname(__FILE__) . '/..'));
+            Yii::setPathOfAlias('ext.cii', realpath(dirname(__FILE__) . '/..'));
+        }
 
         // Register all of Cii
         Yii::import('cii.utilities.*');
