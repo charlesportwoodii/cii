@@ -1,5 +1,5 @@
 <?php
-Yii::import('application.extensions.cii.widgets.CiiActiveForm');
+Yii::import('cii.widgets.CiiActiveForm');
 /**
  * CiiSettingsForm is a CWidget that acts as a form builder based upon the information provided in Dashboard Settings Models
  * This class utilizes components from TbActiveForm
