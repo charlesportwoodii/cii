@@ -44,14 +44,17 @@ class CiiUploader
        $this->verifyFile();
 	}
 
-	private function getSizeLimit()
+	/**
+	 * __getter
+	 * @param string $name
+	 * @return mixed
+	 */
+	public function __get($name)
 	{
-		return $this->_config['sizeLimit'];
-	}
+		if (isset($this->_config[$name]))
+			return $this->_config[$name];
 
-	private function getAllowedExtensions()
-	{
-		return $this->_config['allowedExtensions'];
+		return NULL;
 	}
 
 	/**
@@ -68,7 +71,7 @@ class CiiUploader
         if ($size == 0) 
             return array('error' => Yii::t('ciims.misc', 'File is empty'));
         
-        if ($size > $this->getSizeLimit()) 
+        if ($size > $this->sizeLimit) 
             return array('error' => Yii::t('ciims.misc', 'File is too large'));
         
         $pathinfo = pathinfo($this->file->name);
@@ -95,7 +98,7 @@ class CiiUploader
         $postSize = $this->toBytes(ini_get('post_max_size'));
         $uploadSize = $this->toBytes(ini_get('upload_max_filesize'));
 
-		if ($postSize < $this->getSizeLimit() || $uploadSize < $this->getSizeLimit())
+		if ($postSize < $this->sizeLimit || $uploadSize < $this->sizeLimit)
 		{
 			$size = max(1, $this->sizeLimit / 1024 / 1024) . 'M';
 			throw new CException(Yii::t('ciims.misc', 'Increase post_max_size and upload_max_filesize to {{size}}', array('{{size}}' => $size)));
