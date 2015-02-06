@@ -1,0 +1,13 @@
+{
+    "name": "charlesportwoodii/cii",
+    "description": "CiiMS core components (Cii)",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Charles R. Portwood II",
+            "email": "charlesportwoodii@ethreal.net"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {}
+}

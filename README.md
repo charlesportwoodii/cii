@@ -6,6 +6,7 @@ Assets are managed through npm, grunt, and bower. If you want to hack with CiiMS
 
 ```
 npm install
+bower install
 grunt
 ```
 

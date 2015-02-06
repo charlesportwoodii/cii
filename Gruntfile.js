@@ -18,7 +18,7 @@ module.exports = function(grunt) {
         'concat:css',
         'concat:js',
         'cssmin:css',
-	    'uglify:js',
+	'uglify:js',
         'uglify:comments'
     ]);
 
