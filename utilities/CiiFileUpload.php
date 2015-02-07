@@ -31,39 +31,22 @@ class CiiFileUpload
      */
 	public function uploadFile()
 	{
-        if (!isset(Yii::app()->params['CiiMS']['upload']))
+        if (!isset(Yii::app()->params['ciims_plugins']['upload']))
         {
             Yii::import('cii.utilities.CiiFileUploader');
             $className = 'CiiFileUploader';
         }
         else
-            $className = Yii::app()->params['CiiMS']['upload']['class'];
+            $className = Yii::app()->params['ciims_plugins']['upload']['class'];
 
-        $config = isset(Yii::app()->params['CiiMS']['upload']['options']) ? Yii::app()->params['CiiMS']['upload']['options'] : array();
+        $config = isset(Yii::app()->params['ciims_plugins']['upload']['options']) ? Yii::app()->params['ciims_plugins']['upload']['options'] : array();
         $class = new $className($config);
         $this->_result = $class->upload();
         $this->_response = $this->_handleResourceUpload($this->_result['url']);
 
         return $this->_response;
 	}
-
-    /**
-     * Handle CDN related Uploads
-     * @return string
-     */
-    private function _uploadCDNFile()
-    {
-        if (Cii::getConfig('useRackspaceCDN'))
-            $openCloud = new CiiOpenCloud(Cii::getConfig('openstack_username'), Cii::decrypt(Cii::getConfig('openstack_apikey')), true, NULL, Cii::getConfig('openstack_region'));
-        else
-            $openCloud = new CiiOpenCloud(Cii::getConfig('openstack_username'), Cii::decrypt(Cii::getConfig('openstack_apikey')), false, Cii::getConfig('openstack_identity'), Cii::getConfig('openstack_region'));
-
-        $container = $openCloud->getContainer(Cii::getConfig('openstack_container'));
-        $this->_result = $openCloud->uploadFile($container);
-
-        return $this->_handleResourceUpload($this->_result['url'] . '/' . $this->_result['filename']);
-    }
-
+    
     /**
      * Generic function to handle all resource uploads
      * @param  string $value    The value that should be assigned to $meta->value
@@ -89,13 +72,10 @@ class CiiFileUpload
                 return htmlspecialchars(CJSON::encode($this->_result), ENT_NOQUOTES);
             }
             else
-                throw new CHttpException(400,  Yii::t('Dashboard.main', 'Unable to save uploaded image.'));
+                throw new CHttpException(400,  Yii::t('ciims.misc', 'Unable to save uploaded image.'));
         }
         else
-        {
-            return htmlspecialchars(CJSON::encode($this->_result), ENT_NOQUOTES);
             throw new CHttpException(400, $this->_result['error']);
-        }  
     }
 
 
