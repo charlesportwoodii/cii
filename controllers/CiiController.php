@@ -7,19 +7,29 @@ class CiiController extends CController
 {
     public $theme = NULL;
 
+    private $themeName = NULL;
+
+    private $assetManager = NULL;
     /*
      * Retrieves the asset manager for the theme
      * @return Published AssetManager path
      */    
     public function getAsset($dist=false)
     {
+        if ($this->assetManager != NULL)
+            return $this->assetManager;
+        
         $theme = $this->getTheme();
         $assetAlias = 'webroot.themes.' . $theme  . '.assets';
 
         if ($dist == true)
             $assetAlias .= '.dist';
 
-        return Yii::app()->assetManager->publish(Yii::getPathOfAlias($assetAlias), false, -1, YII_DEBUG);
+        Yii::log('Publishing Assets Directory', 'info', 'cii.ciicontroller');
+
+        $this->assetManager = Yii::app()->assetManager->publish(Yii::getPathOfAlias($assetAlias), false, -1, YII_DEBUG);
+
+        return $this->assetManager;
     }
 
     /**
@@ -154,8 +164,13 @@ class CiiController extends CController
      */
     public function getTheme()
     {
+        if ($this->theme != NULL)
+            return $this->themeName;
+
         $theme = Cii::getConfig('theme', 'default');
         Yii::app()->setTheme(file_exists(YiiBase::getPathOfAlias('webroot.themes.' . $theme)) ? $theme : 'default');
+
+        $this->themeName = $theme;
         return $theme;
     }
 
