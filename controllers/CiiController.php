@@ -11,10 +11,15 @@ class CiiController extends CController
      * Retrieves the asset manager for the theme
      * @return Published AssetManager path
      */    
-    public function getAsset()
+    public function getAsset($dist=false)
     {
         $theme = $this->getTheme();
-        return Yii::app()->assetManager->publish(YiiBase::getPathOfAlias('webroot.themes.' . $theme  . '.assets'), false, -1, YII_DEBUG);
+        $assetAlias = 'webroot.themes.' . $theme  . '.assets';
+
+        if ($dist == true)
+            $assetAlias .= '.dist';
+
+        return Yii::app()->assetManager->publish(Yii::getPathOfAlias($assetAlias), false, -1, YII_DEBUG);
     }
 
     /**
