@@ -350,15 +350,16 @@ class Cii
         {
             // Load some specific CiiMS JS here
             $json = CJSON::encode(array(
-                'email' =>  Cii::get(Yii::app()->user, 'email'),
-                'token' => Cii::getUserConfig('api_key', false),
-                'role' => Cii::get(Yii::app()->user, 'role'),
-                'isAuthenticated' => isset(Yii::app()->user->id),
-                'debug' => YII_DEBUG,
-                'time' => time(),
-                'version' => YII_DEBUG ? Cii::getVersion() : null,
-                'language' => Cii::setApplicationLanguage(),
-                'hosted' => defined('CII_CONFIG')
+                'email' 		=>  Cii::get(Yii::app()->user, 'email'),
+                'token' 		=> Cii::getUserConfig('api_key', false),
+                'role' 			=> Cii::get(Yii::app()->user, 'role'),
+                'isAuthenticated' 	=> isset(Yii::app()->user->id),
+                'debug' 		=> YII_DEBUG,
+                'time' 			=> time(),
+                'version' 		=> YII_DEBUG ? Cii::getVersion() : null,
+                'language' 		=> Cii::setApplicationLanguage(),
+                'hosted' 		=> defined('CII_CONFIG'),
+		'api' 			=> Yii::app()->getBaseUrl(true) . '/api'
             ));
 
             Yii::app()->clientScript->registerScript('ciims', "
