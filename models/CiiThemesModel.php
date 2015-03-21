@@ -150,7 +150,7 @@ class CiiThemesModel extends CiiSettingsModel
         $items = array();
         $tags = Content::model()->findByPk($id)->getTags();
         foreach ($tags as $item)
-            $items[] = array('label' => $item, 'url' => $this->createUrl('/search?q=' . $item));
+            $items[] = array('label' => $item, 'url' => Yii::app()->createUrl('/search?q=' . $item));
 
         return $items;
     }
