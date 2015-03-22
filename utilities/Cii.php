@@ -339,6 +339,17 @@ class Cii
     }
 
     /**
+     * Generates a Safe Hash to use throughout CiiMS
+     * @param  integer $length the hash length, default of 16
+     * @return string
+     */
+    public static function generateSafeHash($length=16)
+    {
+        $factory = new CryptLib\Random\Factory;
+        return preg_replace('/[^A-Za-z0-9\-]/', '', $factory->getLowStrengthGenerator()->generateString($length));
+    }
+
+    /**
      * Loads the user information
      */
     public static function loadUserInfo()
