@@ -133,7 +133,6 @@ class CiiController extends CController
      * BeforeAction method
      * The events defined here occur before every controller action that extends CiiController occurs.
      * This method will run the following tasks:
-     *     - Prevent access to the site if it is in offline mode
      *     - Set the language for i18n
      *     - Apply the correct theme
      * @param  CAction $action The details of the action we want to run
@@ -153,9 +152,6 @@ class CiiController extends CController
 
         // Sets the application language
         Cii::setApplicationLanguage();
-
-        // Handles the offline state
-        $this->handleOfflineMode((bool)Cii::getConfig('offline', false), $action);
 
         // Sets the global theme for CiiMS
         $this->getTheme();
@@ -177,27 +173,6 @@ class CiiController extends CController
 
         $this->themeName = $theme;
         return $theme;
-    }
-
-    /**
-     * Handles being on offline mode
-     * @param string theme The current theme
-     * @param CAction $action
-     */
-    private function handleOfflineMode($isOffline=false, &$action)
-    {
-        if (!$isOffline)
-            return;
-
-        if ($isOffline && $this->id == 'site')
-        {
-            if (!in_array($action->id, array('login', 'logout', 'error', 'sitemap', 'migrate')))
-                throw new CHttpException(403, Yii::t('ciims.controllers.Cii', 'This site is currently disabled. Please check back later.'));
-        }
-        else if (!(isset($this->module) && $this->module->getName() == "dashboard"))
-            throw new CHttpException(403, Yii::t('ciims.controllers.Cii', 'This site is currently disabled. Please check back later.'));
-
-        return;
     }
 
     /**
