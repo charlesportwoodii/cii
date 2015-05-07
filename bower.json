@@ -4,6 +4,6 @@
     "marked": "0.3.2",
     "date.format": "git@github.com:jacwright/date.format.git#master",
     "md5-js": "git@github.com:wbond/md5-js.git#master",
-    "jquery": "2.1.1"
+    "jquery": "2.1.4"
   }
 }
