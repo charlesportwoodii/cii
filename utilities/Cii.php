@@ -36,11 +36,11 @@ class Cii
      * @param  mixed  $default The default value to return if key is not found
      * @return mixed           The value from Config, or default
      */
-    public static function getConfig($key, $default=NULL, $prefix='settings_')
+    public static function getConfig($key, $default=NULL, $prefix='settings_', $force=false)
     {
         $cache = Yii::app()->cache->get($prefix.$key);
 
-        if ($cache === false || $cache == NULL)
+        if ($cache === false || $cache == NULL || $force === true)
         {
             $data = Yii::app()->db->createCommand('SELECT value FROM configuration AS t WHERE t.key = :key')
                                    ->bindParam(':key', $key)
@@ -251,59 +251,88 @@ class Cii
         return 'CiiMSComments';
     }
 
-    /**
-     * Provides a _very_ simple encryption method that we can user to encrypt things like passwords.
-     * This way, if the database is exposed AND the encryptionKey is not exposed, important stuff like
-     * SMTP Passwords and what not aren't publicly exposed.
-     *
-     * Since often times these passwords are the same password used to access more critical seems, _I_
-     * think it is imnportant that they aren't stored in plain text, but with some form of reversible encryption
-     * so that the user doesn't have to decrypt it on their own.
-     *
-     * The purpose of this is to _assist_ in hardened security, and is in no means a substitude for a more comprehensive
-     * security strategy. This _WILL NOT_ help you if you encryptionKey is taken as well - but it might buy you some time.
-     *
-     * @param  string $field The data we want to ecrnypt
-     * @return string        encrypted data
-     */
+	/**
+	 * Encrypts a message
+	 * @param string $message 		The message to encryept
+	 * @return string $ciphertext	The encrypted message
+	 */
+	public static function encrypt($message, $key=NULL)
+	{
+		if ($key != NULL)
+			Yii::log('warning', 'Use of the `$key` parameter is deprecated', 'cii');
+		
+		$key = self::getEncryptionKey();
 
-    public static function encrypt($field, $key = NULL)
-    {
-        if ($key == NULL)
-            $key = Yii::app()->params['encryptionKey'];
+		try {
+            $ciphertext = Crypto::Encrypt($message, $key);
+        } catch (CryptoTestFailedException $ex) {
+			Yii::log('Cannot safely perfrom encryption', 'error', 'cii');	
+			throw new Exception('Cannot safely perform encryption');
+        } catch (CannotPerformOperationException $ex) {
+			Yii::log('Cannot safely perfrom encryption', 'error', 'cii');	
+			throw new Exception('Cannot safely perform encryption');
+        }
+		
+		return $ciphertext;
+	}
 
-        return base64_encode(
-            mcrypt_encrypt(
-                MCRYPT_RIJNDAEL_256,
-                md5($key),
-                $field,
-                MCRYPT_MODE_CBC,
-                md5(md5($key))
-                )
-            );
-    }
+	/**
+	 * Decrypts a message
+	 * @param string $message 		The message to decryept
+	 * @return string $decrypted	The decrypted message
+	 */
+	public static function decrypt($message, $key=NULL)
+	{
+		if ($key != NULL)
+			Yii::log('warning', 'Use of the `$key` parameter is deprecated', 'cii');
 
-    /**
-     * Acts are a counterpart to Cii::encrypt().
-     * @see  Cii::encrypt()
-     * @param  string $field encrypted text
-     * @return string        unencrypted text
-     */
-    public static function decrypt($field, $key = NULL)
-    {
-        if ($key == NULL)
-            $key = Yii::app()->params['encryptionKey'];
+		$key = self::getEncryptionKey();
+	
+		try {
+            $decrypted = self::Decrypt($message, $key);
+        } catch (InvalidCiphertextException $ex) {
+			Yii::log('Ciphertext or key is invalid', 'error', 'cii');
+			return null;
+        } catch (CryptoTestFailedException $ex) {
+			Yii::log('Ciphertext or key is invalid', 'error', 'cii');
+			return null;
+        } catch (CannotPerformOperationException $ex) {
+			Yii::log('Ciphertext or key is invalid', 'error', 'cii');
+			return null;
+        }
+		
+		return $decrypted;
+	}	
 
-        return rtrim(
-            mcrypt_decrypt(
-                MCRYPT_RIJNDAEL_256,
-                md5($key),
-                base64_decode($field),
-                MCRYPT_MODE_CBC,
-                md5(md5($key))
-            ),
-        "\0");
-    }
+	/**
+	 * Retrieves the encryption key from cache, or generations a new one in the instance one does not exists
+	 * @return string
+	 */
+	public static function getEncryptionKey()
+	{
+		$key = self::getConfig('encryptionKey', NULL, 'settings_', true);
+		if ($key == NULL || $key == "")
+		{
+				try {
+					$key = Crypto::CreateNewRandomKey();
+				} catch (CryptoTestFailedException $ex) {
+					throw new CException('Encryption key generation failed');
+				} catch (CannotPerformOperationException $ex) {
+					throw new CException('Encryption key generation failed');
+				}
+
+				$config = new Configuration;
+				$config->attributes = array(
+					'key' => 'encryptionkey',
+					'value' => bin2hex($key)
+				);
+
+				if (!$config->save())
+					throw new CException('Encryption key generation failed');
+		}
+
+		return hex2bin(self::getConfig('encryptionKey', NULL, 'settings_', true));
+	}
 
 	/**
 	 * Beause doing this all over the place is stupid...

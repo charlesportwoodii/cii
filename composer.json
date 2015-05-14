@@ -23,5 +23,7 @@
         ]
     },  
     "minimum-stability": "dev",
-    "require": {}
+    "require": {
+        "defuse/php-encryption": "v1.2.1"
+    }
 }
