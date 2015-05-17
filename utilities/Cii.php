@@ -286,6 +286,9 @@ class Cii
 		if ($key != NULL)
 			Yii::log('warning', 'Use of the `$key` parameter is deprecated', 'cii');
 
+        if (empty($messagE))
+            return null;
+            
 		$key = self::getEncryptionKey();
 	
 		try {
