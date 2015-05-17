@@ -206,8 +206,8 @@ class CiiUserIdentity extends CUserIdentity
         // Load the current API key if one exists
         $apiKey = UserMetadata::model()->findByAttributes(array('user_id' => $this->_id, 'key' => 'api_key' . $this->app_name));
 
-	if ($apiKey == NULL)
-		$apiKey = new UserMetadata;
+    	if ($apiKey == NULL)
+    		$apiKey = new UserMetadata;
 
         $apiKey->user_id = $this->_id;
         $apiKey->key     = 'api_key' . $this->app_name;

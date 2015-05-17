@@ -150,6 +150,25 @@ class CiiController extends CController
             @Yii::app()->newRelic->setTransactionName($this->id, $action->id);
         } catch (Exception $e) {}
 
+        // De-authenticate pre-existing sessions
+        if (!Yii::app()->user->isGuest)
+        {
+            $apiKey =  UserMetadata::model()->getPrototype('UserMetadata', array(
+                'user_id' => Yii::app()->user->id,
+                'key' => 'api_key'
+            ), array('value' => NULL));
+            
+            if ($apiKey == NULL || !empty($apiKey->value))
+            {
+                $activeSessionId = Yii::app()->cache->get($apiKey->value);
+                if ($activeSessionId !== session_id())
+                {
+                    Yii::app()->cache->delete(Yii::app()->user->apiKey);
+                    Yii::app()->user->logout();
+                }
+            }
+        }
+        
         // Sets the application language
         Cii::setApplicationLanguage();
 
