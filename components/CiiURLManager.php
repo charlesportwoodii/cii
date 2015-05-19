@@ -172,6 +172,9 @@ class CiiURLManager extends CUrlManager
 	private function routeAllRulesToRoot()
 	{
 		$rules = $this->rules;
+		foreach ($this->defaultRules as $k=>$v)
+			$rules[$k] = '/content/list';
+
 		foreach ($rules as $k=>$v)
 			$rules[$k] = '/content/list';
 
