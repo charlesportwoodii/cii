@@ -159,7 +159,7 @@ class CiiURLManager extends CUrlManager
 
 		// If the Theme has requested to handle routing client side, allow it to do so
 		// Otherwise generate the URL rules for Yii to handle it
-		if ($theme->noRouting)
+		if ($theme->noRouting !== false)
 			return $this->routeAllRulesToRoot();
 		else
 			return CMap::mergeArray($rules, $this->generateRules());
@@ -173,9 +173,13 @@ class CiiURLManager extends CUrlManager
 	{
 		$rules = $this->rules;
 		foreach ($rules as $k=>$v)
-		$rules[$k] = '/';
+			$rules[$k] = '/content/list';
 
+		$rules['/sitemap.xml'] = '/site/sitemap';
 		$rules['/login'] = '/site/login';
+		$rules['/'] = '/content/list';
+		$this->rules = CMap::mergeArray($this->addRSSRules(), $this->rules);
+		$this->rules = CMap::mergeArray($this->addModuleRules(), $this->rules);
 		return $rules;
 	}
 
