@@ -6,6 +6,9 @@
  * data can identity the user.
  * @method string updatePassword(string $email, string $password)
  */
+use Rych\OTP\Seed;
+use Rych\OTP\TOTP;
+
 class CiiUserIdentity extends CUserIdentity
 {
 	/**
@@ -14,12 +17,30 @@ class CiiUserIdentity extends CUserIdentity
 	 */
 	const ERROR_PASSWORD_LOCKOUT = 3;
 
+    /**
+     * Constant variable for requiring visibility of two factor auth code
+     * @var const REQUIRE_TWO_FACTOR_AUTH
+     */
+    const REQUIRE_TWO_FACTOR_AUTH = 4;
+
+    /**
+     * Constant variable for indicating a two factor auth code is bad
+     * @var const INVALID_TWO_FACTOR_AUTH
+     */
+    const INVALID_TWO_FACTOR_AUTH = 5;
+    
 	/**
 	 * The Application to use for API generation
 	 * @var string
 	 */
 	public $app_name = NULL;
 
+    /**
+     * Two factor authentication token
+     * @var string
+     */
+    protected $twoFactorCode = false;
+    
 	/**
 	 * The user id
 	 * @var int $_id
@@ -52,6 +73,15 @@ class CiiUserIdentity extends CUserIdentity
     private $_attempts;
 
     /**
+     * Constructor overload for two factor code
+     */
+    public function __construct($username, $password, $twoFactorCode=false)
+    {
+        parent::__construct($username, $password);
+        $this->twoFactorCode = $twoFactorCode;
+    }
+    
+    /**
 	 * Gets the id for Yii::app()->user->id
 	 * @return int 	the user id
 	 */
@@ -64,9 +94,12 @@ class CiiUserIdentity extends CUserIdentity
      * Retrieves the user's model, and presets an error code if one does not exists
      * @return Users $this->_user
      */
-    protected function getUser()
+    public function getUser()
     {
-		$this->_user = Users::model()->findByAttributes(array('email'=>$this->username));
+        if ($this->_user !== NULL)
+            return $this->_user;
+        else
+		    $this->_user = Users::model()->findByAttributes(array('email'=>$this->username));
 
         if ($this->_user == NULL)
             $this->errorCode = YII_DEBUG ? self::ERROR_USERNAME_INVALID : self::ERROR_UNKNOWN_IDENTITY;
@@ -107,21 +140,29 @@ class CiiUserIdentity extends CUserIdentity
         if ($this->_user == NULL)
             return false;
 
-        $meta = UserMetadata::model()->findbyAttributes(array('user_id' => $this->_user->id, 'key' => 'passwordAttempts'));
+        $this->_attempts = UserMetadata::model()->getPrototype('UserMetadata', array(
+                'user_id' => $this->getUser()->id,
+                'key' => 'passwordAttempts'
+            ), array(
+                'user_id' => $this->getUser()->id,
+                'key' => 'passwordAttempts',
+                'value' => 0
+        ));
 
-        if ($meta === NULL)
-        {
-            $meta 			= new UserMetadata;
-            $meta->attributes = array(
-                'user_id' => $this->_user->id,
-                'key'     => 'passwordAttempts',
-                'value'   => 0
-            );
-            $meta->save();
-        }
+        return $this->_attempts;
+    }
 
-        $this->_attempts = $meta;
-        return $meta;
+    /**
+     * Validates the users two factor authentication code
+     * @return boolean
+     */
+    private function validateTwoFactorCode()
+    {
+        $otpSeed = $this->getUser()->getMetadataObject('OTPSeed', false)->value;
+
+        $otplib = new TOTP($otpSeed);
+
+        return $otplib->validate($this->twoFactorCode);
     }
 
 	/**
@@ -138,11 +179,8 @@ class CiiUserIdentity extends CUserIdentity
         if ($this->errorCode != NULL)
             return !$this->errorCode;
 
-        // If the user is banned, inactive,
-        if ($this->_user->status == Users::BANNED || $this->_user->status == Users::INACTIVE || $this->_user->status == Users::PENDING_INVITATION)
-			$this->errorCode=self::ERROR_UNKNOWN_IDENTITY;
-		else if(!$this->password_verify_with_rehash($this->password, $this->_user->password))
-			$this->errorCode= YII_DEBUG ? self::ERROR_PASSWORD_INVALID : self::ERROR_UNKNOWN_IDENTITY;
+        // Validate the users password
+        $this->validatePassword();
 
         // If this user has 5 or more failed password attempts
         if ($this->_attempts->value >= 5)
@@ -164,6 +202,20 @@ class CiiUserIdentity extends CUserIdentity
             }
         }
 
+        // If the user needs two factor authentication
+        if ($this->getUser()->needsTwoFactorAuth())
+        {
+            // If the code isn't supplied, throw an error
+            if ($this->twoFactorCode === false)
+               $this->errorCode = self::REQUIRE_TWO_FACTOR_AUTH;
+            else
+            {
+                // If the 2fa code is supplied, verify it
+                if (!$this->validateTwoFactorCode())
+                    $this->errorCode = self::INVALID_TWO_FACTOR_AUTH;
+            } 
+        }
+
         // At this point, we should should know if the validation has succeeded or not. If the errorCode has been altered, immediately bail
         if ($this->errorCode != NULL)
             return !$this->errorCode;
@@ -171,6 +223,24 @@ class CiiUserIdentity extends CUserIdentity
             $this->setIdentity();
 
         return !$this->errorCode;
+    }
+
+    /**
+     * Do some basic password validation
+     *
+     */
+    public function validatePassword()
+    {
+        // If the user is banned, inactive, or has a pending invitation, abort
+        if ($this->_user->status == Users::BANNED || $this->_user->status == Users::INACTIVE || $this->_user->status == Users::PENDING_INVITATION)
+            $this->errorCode = self::ERROR_UNKNOWN_IDENTITY;
+        else if (!$this->password_verify_with_rehash($this->password, $this->_user->password))
+            $this->errorCode = YII_DEBUG ? self::ERROR_PASSWORD_INVALID : self::ERROR_UNKNOWN_IDENTITY;
+
+        if ($this->errorCode === 100 || $this->errorCode === NULL || $this->errorCode === self::REQUIRE_TWO_FACTOR_AUTH)
+            return true;
+
+        return false;
     }
 
     /**
@@ -203,20 +273,21 @@ class CiiUserIdentity extends CUserIdentity
         // Load the hashing factory
         $factory = new CryptLib\Random\Factory;
 
-        // Load the current API key if one exists
-        $apiKey = UserMetadata::model()->findByAttributes(array('user_id' => $this->_id, 'key' => 'api_key' . $this->app_name));
+        $meta = UserMetadata::model()->getPrototype('UserMetadata', array(
+                'user_id' => $this->getUser()->id,
+                'key' => 'api_key' . $this->app_name
+            ), 
+            array(
+                'user_id' => $this->getUser()->id,
+                'key' => 'api_key' . $this->app_name
+        ));
 
-    	if ($apiKey == NULL)
-    		$apiKey = new UserMetadata;
+        $meta->value   = $factory->getLowStrengthGenerator()->generateString(16);
 
-        $apiKey->user_id = $this->_id;
-        $apiKey->key     = 'api_key' . $this->app_name;
-        $apiKey->value   = $factory->getLowStrengthGenerator()->generateString(16);
+        if ($meta->save())
+            return $meta->value;
 
-        // Then save the API key
-        $apiKey->save();
-
-        return $apiKey->value;
+        throw new CHttpException(500, Yii::t('ciims.models.LoginForm', 'Unable to create API key, please try again.'));
     }
 
     /**
@@ -233,11 +304,8 @@ class CiiUserIdentity extends CUserIdentity
         if (password_needs_rehash($bcryt_hash, PASSWORD_BCRYPT, array('cost' => $this->_cost)))
         {
             // Update the hash in the db
-            $this->_user->password = $this->password;
-            $this->_user->save();
-
-            // Return verification that the rehash worked
-            return password_verify(Users::model()->encryptHash($this->username, $this->password, Yii::app()->params['encryptionKey']), $this->_user->password);
+            $this->getUser()->password = $this->password;
+            return $this->getUser()->save();
         }
 
         // Otherwise return true
