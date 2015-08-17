@@ -273,7 +273,7 @@ class Cii
 			throw new Exception('Cannot safely perform encryption');
         }
 		
-		return $ciphertext;
+		return bin2hex($ciphertext);
 	}
 
 	/**
@@ -286,13 +286,13 @@ class Cii
 		if ($key != NULL)
 			Yii::log('warning', 'Use of the `$key` parameter is deprecated', 'cii');
 
-        if (empty($messagE))
+        if (empty($message))
             return null;
-            
+         
 		$key = self::getEncryptionKey();
 	
 		try {
-            $decrypted = self::Decrypt($message, $key);
+            $decrypted = Crypto::Decrypt(hex2bin($message), $key);
         } catch (InvalidCiphertextException $ex) {
 			Yii::log('Ciphertext or key is invalid', 'error', 'cii');
 			return null;
