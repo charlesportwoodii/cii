@@ -160,7 +160,10 @@ class CiiUserIdentity extends CUserIdentity
     {
         $otpSeed = $this->getUser()->getMetadataObject('OTPSeed', false)->value;
 
-        $otplib = new TOTP($otpSeed);
+		if ($otpSeed === false)
+			return false;
+		
+        $otplib = new TOTP(Cii::decrypt($otpSeed));
 
         return $otplib->validate($this->twoFactorCode);
     }
