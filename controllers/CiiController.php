@@ -20,7 +20,7 @@ class CiiController extends CController
             return $this->assetManager;
         
         $theme = $this->getTheme();
-        $assetAlias = 'webroot.themes.' . $theme  . '.assets';
+        $assetAlias = 'base.themes.' . $theme  . '.assets';
 
         if ($dist == true)
             $assetAlias .= '.dist';
@@ -188,7 +188,7 @@ class CiiController extends CController
             return $this->themeName;
 
         $theme = Cii::getConfig('theme', 'default');
-        Yii::app()->setTheme(file_exists(YiiBase::getPathOfAlias('webroot.themes.' . $theme)) ? $theme : 'default');
+        Yii::app()->setTheme(file_exists(YiiBase::getPathOfAlias('base.themes.' . $theme)) ? $theme : 'default');
 
         $this->themeName = $theme;
         return $theme;
@@ -231,9 +231,9 @@ class CiiController extends CController
 	    	if (isset($data['data']) && is_object($data['data']))
 	    		$this->params['data'] = $data['data']->attributes;
 
-            if (!$this->isInModule() && file_exists(Yii::getPathOfAlias('webroot.themes.') . DS . Yii::app()->theme->name .  DS . 'Theme.php'))
+            if (!$this->isInModule() && file_exists(Yii::getPathOfAlias('base.themes.') . DS . Yii::app()->theme->name .  DS . 'Theme.php'))
             {
-                Yii::import('webroot.themes.' . Yii::app()->theme->name . '.Theme');
+                Yii::import('base.themes.' . Yii::app()->theme->name . '.Theme');
                 $this->theme = new Theme;
 	    	}
                         

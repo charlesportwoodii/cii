@@ -23,7 +23,7 @@ class CiiPHPMessageSource extends CPhpMessageSource
         Yii::app()->language = Cii::setApplicationLanguage();
         parent::init();
 		if (isset(Yii::app()->theme) && isset(Yii::app()->theme->name))
-			$this->basePath = Yii::getPathOfAlias('webroot.themes.' . Yii::app()->theme->name . '.messages');
+			$this->basePath = Yii::getPathOfAlias('base.themes.' . Yii::app()->theme->name . '.messages');
         else if (isset(Yii::app()->controller->module->id))
             $this->basePath = Yii::getPathOfAlias('application.modules.' . Yii::app()->controller->module->id);
 		else
@@ -62,7 +62,7 @@ class CiiPHPMessageSource extends CPhpMessageSource
                     	$theme = $baseClass[0];
                     	unset($baseClass[0]);
                     	$baseClass = implode('.', $baseClass);
-                    	$this->_files[$category][$language] = Yii::getPathOfAlias("webroot.themes.$theme.messages").DS.$language.DS.$baseClass.'.php';
+                    	$this->_files[$category][$language] = Yii::getPathOfAlias("base.themes.$theme.messages").DS.$language.DS.$baseClass.'.php';
                     }
                     else 
                     {
