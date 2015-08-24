@@ -4,5 +4,6 @@ node_modules
 assets/lib
 
 /vendor/
-
+tests/_data/*
+tests/_output/*
 tests/_output/*
