@@ -125,9 +125,9 @@ class CiiURLManager extends CUrlManager
 	{
 		$theme;
 		$themeName = Cii::getConfig('theme', 'default');
-		if (file_exists(Yii::getPathOfAlias('webroot.themes.') . DS . $themeName .  DS . 'Theme.php'))
+		if (file_exists(Yii::getPathOfAlias('base.themes.') . DS . $themeName .  DS . 'Theme.php'))
 		{
-			Yii::import('webroot.themes.' . $themeName . '.Theme');
+			Yii::import('base.themes.' . $themeName . '.Theme');
 			$theme = new Theme;
 		}
 
