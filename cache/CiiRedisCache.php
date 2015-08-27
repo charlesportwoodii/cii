@@ -11,9 +11,19 @@ class CiiRedisCache extends CiiCache
 	 * @var Redis the Redis instance
 	 */
 	protected $_redis=null;
-	
+
+	/**
+	 * @var array default server data
+	 */
+	private $_serverDefaults=array(
+		'host' => '127.0.0.1',
+		'port' => 6379,
+		'timeout' => 2.5,
+		'db' => NULL
+	);	
+
     /**
-	 * @var string list of servers 
+	 * @var array list of servers 
 	 */
 	private $_server=array();
 
@@ -25,6 +35,7 @@ class CiiRedisCache extends CiiCache
 	 */
 	public function init()
 	{
+		$this->_server = CMap::mergeArray($this->_serverDefaults, $this->_server);
 		parent::init();
         $this->getRedis();
 	}
@@ -43,14 +54,20 @@ class CiiRedisCache extends CiiCache
 				$val = $this->_redis->connect($this->_server['socket']);
 			else
 			{
-            	$this->_redis->pconnect(
+            	$connection = $this->_redis->pconnect(
 					$this->_server['host'],
 					$this->_server['port'],
-					isset($this->_server['timeout']) ? $this->_server['timeout'] : 2.5
+					$this->_server['timeout']
 				);
+
+				if ($connection === false || $connection === NULL)
+				{
+					Yii::log('Unable to connect to Redis instance using data: ' . print_r($this->_server, true), 'warning', 'cii.cache.CiiRedisCache');
+					throw new CException('Unable to connect to Redis instance for caching');
+				}
 			}
 				
-            if (isset($this->_server['db']))
+            if (!empty($this->_server['db']))
             	$this->_redis->select($this->_server['db']);
         }
 	}
