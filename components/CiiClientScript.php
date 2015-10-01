@@ -21,6 +21,7 @@
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **/
 Yii::import('vendor.charlesportwoodii.yii-newrelic.YiiNewRelicClientScript');
+Yii::import('vendor.charlesportwoodii.cii.components.CiiHtml');
 class CiiClientScript extends YiiNewRelicClientScript
 {
 	/**
@@ -75,7 +76,41 @@ class CiiClientScript extends YiiNewRelicClientScript
 		if ($this->combineScriptFiles && $this->enableJavaScript)
 			$this->combineScriptFiles(self::POS_HEAD);
 
-		parent::renderHead($output);
+		$html='';
+		foreach($this->metaTags as $meta)
+			$html.=CHtml::metaTag($meta['content'],null,null,$meta)."\n";
+		foreach($this->linkTags as $link)
+			$html.=CHtml::linkTag(null,null,null,null,$link)."\n";
+		foreach($this->cssFiles as $url=>$media)
+			$html.=CHtml::cssFile($url,$media)."\n";
+		foreach($this->css as $css)
+			$html.=CHtml::css($css[0],$css[1])."\n";
+		if($this->enableJavaScript)
+		{
+			if(isset($this->scriptFiles[self::POS_HEAD]))
+			{
+				foreach($this->scriptFiles[self::POS_HEAD] as $scriptFileValueUrl=>$scriptFileValue)
+				{
+					if(is_array($scriptFileValue))
+						$html.=CiiHtml::scriptFile($scriptFileValueUrl,$scriptFileValue)."\n";
+					else
+						$html.=CiiHtml::scriptFile($scriptFileValueUrl)."\n";
+				}
+			}
+
+			if(isset($this->scripts[self::POS_HEAD]))
+				$html.=$this->renderScriptBatch($this->scripts[self::POS_HEAD]);
+		}
+
+		if($html!=='')
+		{
+			$count=0;
+			$output=preg_replace('/(<title\b[^>]*>|<\\/head\s*>)/is','<###head###>$1',$output,1,$count);
+			if($count)
+				$output=str_replace('<###head###>',$html,$output);
+			else
+				$output=$html.$output;
+		}
 	}
 
 	/**
@@ -88,7 +123,30 @@ class CiiClientScript extends YiiNewRelicClientScript
 		if ($this->combineScriptFiles)
 			$this->combineScriptFiles(self::POS_BEGIN);
 
-		parent::renderBodyBegin($output);
+		$html='';
+		if(isset($this->scriptFiles[self::POS_BEGIN]))
+		{
+			foreach($this->scriptFiles[self::POS_BEGIN] as $scriptFileUrl=>$scriptFileValue)
+			{
+				if(is_array($scriptFileValue))
+					$html.=CiiHtml::scriptFile($scriptFileUrl,$scriptFileValue)."\n";
+				else
+					$html.=CiiHtml::scriptFile($scriptFileUrl)."\n";
+			}
+		}
+
+		if(isset($this->scripts[self::POS_BEGIN]))
+			$html.=$this->renderScriptBatch($this->scripts[self::POS_BEGIN]);
+
+		if($html!=='')
+		{
+			$count=0;
+			$output=preg_replace('/(<body\b[^>]*>)/is','$1<###begin###>',$output,1,$count);
+			if($count)
+				$output=str_replace('<###begin###>',$html,$output);
+			else
+				$output=$html.$output;
+		}
 	}
 
 	/**
@@ -101,7 +159,45 @@ class CiiClientScript extends YiiNewRelicClientScript
 		if ($this->combineScriptFiles)
 			$this->combineScriptFiles(self::POS_END);
 
-		parent::renderBodyEnd($output);
+		if(!isset($this->scriptFiles[self::POS_END]) && !isset($this->scripts[self::POS_END])
+			&& !isset($this->scripts[self::POS_READY]) && !isset($this->scripts[self::POS_LOAD]))
+			return;
+
+		$fullPage=0;
+		$output=preg_replace('/(<\\/body\s*>)/is','<###end###>$1',$output,1,$fullPage);
+		$html='';
+		if(isset($this->scriptFiles[self::POS_END]))
+		{
+			foreach($this->scriptFiles[self::POS_END] as $scriptFileUrl=>$scriptFileValue)
+			{
+				if(is_array($scriptFileValue))
+					$html.=CiiHtml::scriptFile($scriptFileUrl,$scriptFileValue)."\n";
+				else
+					$html.=CiiHtml::scriptFile($scriptFileUrl)."\n";
+			}
+		}
+		$scripts=isset($this->scripts[self::POS_END]) ? $this->scripts[self::POS_END] : array();
+		if(isset($this->scripts[self::POS_READY]))
+		{
+			if($fullPage)
+				$scripts[]="jQuery(function($) {\n".implode("\n",$this->scripts[self::POS_READY])."\n});";
+			else
+				$scripts[]=implode("\n",$this->scripts[self::POS_READY]);
+		}
+		if(isset($this->scripts[self::POS_LOAD]))
+		{
+			if($fullPage)
+				$scripts[]="jQuery(window).on('load',function() {\n".implode("\n",$this->scripts[self::POS_LOAD])."\n});";
+			else
+				$scripts[]=implode("\n",$this->scripts[self::POS_LOAD]);
+		}
+		if(!empty($scripts))
+			$html.=$this->renderScriptBatch($scripts);
+
+		if($fullPage)
+			$output=str_replace('<###end###>',$html,$output);
+		else
+			$output=$output.$html;
 	}
 
 	/**
